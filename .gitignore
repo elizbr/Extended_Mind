@@ -1,4 +1,5 @@
 secrets.py
 cache.json
 albums.sqlite
+spot.py
 
