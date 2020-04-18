@@ -16,7 +16,6 @@ import json
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials #To access authorised Spotify data
 
-
 #reference
 # https://medium.com/@RareLoot/extracting-spotify-data-on-your-favourite-artist-via-python-d58bc92a4330
 # https://github.com/michalczaplinski/pitchfork
@@ -398,7 +397,7 @@ app = Flask(__name__)
 
 
 ################
-"""
+
 if __name__ == "__main__":
     CACHE_DICT = open_cache()
     create_db()
@@ -427,4 +426,4 @@ if __name__ == "__main__":
             print('passing at except')
             pass
     #print(len(albums_folder))
-        """
+ 
