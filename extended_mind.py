@@ -17,8 +17,18 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials #To access authorised Spotify data
 
 
+#reference
+# https://medium.com/@RareLoot/extracting-spotify-data-on-your-favourite-artist-via-python-d58bc92a4330
+# https://github.com/michalczaplinski/pitchfork
+
+
 os.environ["SPOTIPY_CLIENT_ID"] = secrets.spotify_id
 os.environ["SPOTIPY_CLIENT_SECRET"] = secrets.spotify_secret
+
+client_id = secrets.spotify_id
+client_secret = secrets.spotify_secret
+client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager) #spotify object to access API
 
 
 #classes 
@@ -68,11 +78,6 @@ class Artist:
         json_safe_t = [self.name, self.genre, self.bio, self.topalbum, self.toptracks, self.albumlist]
         return json_safe_t
     
-
-#reference
-# https://medium.com/@RareLoot/extracting-spotify-data-on-your-favourite-artist-via-python-d58bc92a4330
-# https://github.com/michalczaplinski/pitchfork
-
 
 # set up cache
 CACHE_FILENAME = 'cache.json'
@@ -158,31 +163,44 @@ def create_db():
     conn.close()
 
 
-
 # spotify call
 
 
-client_id = secrets.spotify_id
-client_secret = secrets.spotify_secret
-client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
-sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager) #spotify object to access API
+
 name = "radiohead" #chosen artist
 result = sp.search(name) #search query
-print(result['tracks']['items'][0]['artists'])
+#print(result['tracks']['items'][0]['artists'])
 
 
 #Extract Artist's uri
 artist_uri = result['tracks']['items'][0]['artists'][0]['uri']
 #Pull all of the artist's albums
 sp_albums = sp.artist_albums(artist_uri, album_type='album')
+sp_tracks = sp.artist_top_tracks(artist_uri, country = "US")
+sp_relatedartists = sp.artist_related_artists(artist_uri)
 #Store artist's albums' names' and uris in separate lists
 album_names = []
 album_uris = []
 for i in range(len(sp_albums['items'])):
     album_names.append(sp_albums['items'][i]['name'])
     album_uris.append(sp_albums['items'][i]['uri'])
-    
-print(album_names)
+
+track_names = [] 
+track_uris = []
+for song in sp_tracks['tracks']:
+    track_names.append(song['name'])
+    track_uris.append(song['uri'])
+#print(track_uris)
+
+genres = sp_relatedartists['artists'][0]['genres']
+print(genres)
+similar_artists = []
+similar_a_uri = []
+for artist in sp_relatedartists['artists']:
+    similar_artists.append(artist['name'])
+    similar_a_uri.append(artist['uri'])
+
+
 
 
 
