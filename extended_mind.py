@@ -64,19 +64,30 @@ class Artist:
 
     Instance Attributes:
     '''
-    def __init__(self, name = 'None', genre = 'None', bio = 'None', topalbum = 'None', toptracks = 'None', albumlist = 'None'):
+    def __init__(self, name = 'None', uri = 'None', genre = 'None', topsong1 = 'None', topsong2 = 'None', topsong3 = 'None', topsong4 = 'None', topsong5 = 'None', similartist1 = 'None', similartist2 = 'None', similartist3 = 'None', albumlist = 'None'):
         self.name = name 
+        self.uri = uri
         self.genre = genre
-        self.bio = bio 
-        self.topalbum = topalbum
-        self.toptracks = toptracks
+        self.topsong1 = topsong1
+        self.topsong2 = topsong2
+        self.topsong3 = topsong3
+        self.topsong4 = topsong4
+        self.topsong5 = topsong5
+        self.similarartist1 = similartist1
+        self.similarartist2 = similartist2
+        self.similarartist3 = similartist3
         self.albumlist = albumlist
 
     def jjson(self):
         '''returns a list of content
         '''
-        json_safe_t = [self.name, self.genre, self.bio, self.topalbum, self.toptracks, self.albumlist]
+        json_safe_t = [self.name, self.uri, self.genre, self.topsong1, self.topsong2, self.topsong3, self.topsong4, self.topsong5, self.similarartist1, self.similarartist2, self.similarartist3, self.albumlist]
         return json_safe_t
+    
+    def list_of_albums(self):
+        '''returns list of str albums'''
+        albums = self.albumlist.split(',')
+        return albums 
     
 
 # set up cache
@@ -142,16 +153,20 @@ def create_db():
 	    "ArtistTitle"	TEXT)
         '''
 
-    create_artist_sql = '''
-        CREATE TABLE IF NOT EXISTS "Artists" (
-	    "Id"	INTEGER PRIMARY KEY AUTOINCREMENT,
-	    "ArtistTitle"	TEXT UNIQUE,
-	    "ArtistGenre"	TEXT,
-	    "ArtistBio"	TEXT UNIQUE,
-	    "TopAlbum"	TEXT UNIQUE,
-	    "TopTrack"	NUMERIC,
-	    "AlbumList"	INTEGER)
-        '''
+    create_artist_sql = '''CREATE TABLE "Artists" (
+	"Id"	INTEGER PRIMARY KEY AUTOINCREMENT,
+	"Name"	TEXT,
+	"SpotifyUri"	TEXT,
+	"Genre"	TEXT,
+	"TopSong1"	TEXT,
+	"TopSong2"	TEXT,
+	"TopSong3"	TEXT,
+	"TopSong4"	TEXT,
+	"TopSong5"	TEXT,
+	"SimilarArtist1"	TEXT,
+	"SimilarArtist2"	TEXT,
+	"SimilarArtist3"	TEXT)
+    '''
 
     #cur.execute(drop_bars_sql)
     #cur.execute(drop_countries_sql)
@@ -165,55 +180,84 @@ def create_db():
 
 # spotify call
 
+def spotipy_call(artist):
+    '''makes api call to spotify and returns a bunch of info into an Artist'''
+    result = sp.search(artist) #search query
+    #print(result['tracks']['items'][0]['artists'])
 
+    #Extract Artist's uri
+    artist_uri = result['tracks']['items'][0]['artists'][0]['uri']
+    #Pull all of the artist's albums
+    sp_albums = sp.artist_albums(artist_uri, album_type='album')
+    sp_tracks = sp.artist_top_tracks(artist_uri, country = "US")
+    sp_relatedartists = sp.artist_related_artists(artist_uri)
+    #Store artist's albums' names' and uris in separate lists
+    album_names = ''
+    #album_uris = []
+    list_albums = []
+    for i in range(len(sp_albums['items'])):
+        alnum = sp_albums['items'][i]['name']
+        if alnum not in list_albums:
+            list_albums.append(alnum)
+            album_names = album_names + alnum + ', '
+        #album_uris.append(sp_albums['items'][i]['uri'])
 
-name = "radiohead" #chosen artist
-result = sp.search(name) #search query
-#print(result['tracks']['items'][0]['artists'])
+    track_names = [] 
+    #track_uris = []
+    for song in sp_tracks['tracks'][0:5]:
+        track_names.append(song['name'])
+        #track_uris.append(song['uri'])
+    print(track_names)
 
-
-#Extract Artist's uri
-artist_uri = result['tracks']['items'][0]['artists'][0]['uri']
-#Pull all of the artist's albums
-sp_albums = sp.artist_albums(artist_uri, album_type='album')
-sp_tracks = sp.artist_top_tracks(artist_uri, country = "US")
-sp_relatedartists = sp.artist_related_artists(artist_uri)
-#Store artist's albums' names' and uris in separate lists
-album_names = []
-album_uris = []
-for i in range(len(sp_albums['items'])):
-    album_names.append(sp_albums['items'][i]['name'])
-    album_uris.append(sp_albums['items'][i]['uri'])
-
-track_names = [] 
-track_uris = []
-for song in sp_tracks['tracks']:
-    track_names.append(song['name'])
-    track_uris.append(song['uri'])
-#print(track_uris)
-
-genres = sp_relatedartists['artists'][0]['genres']
-print(genres)
-similar_artists = []
-similar_a_uri = []
-for artist in sp_relatedartists['artists']:
-    similar_artists.append(artist['name'])
-    similar_a_uri.append(artist['uri'])
-
-
-
-
-
-#scrape pitchfork for album reviews 
-
+    genre = sp_relatedartists['artists'][0]['genres'][0]
+    #print(genre)
+    similar_artists = []
+    #similar_a_uri = []
+    for artist in sp_relatedartists['artists'][0:3]:
+        similar_artists.append(artist['name'])
+        #similar_a_uri.append(artist['uri'])
+    print(similar_artists)
+    print(genre)
+    print(album_names)
+    return Artist(name = artist, uri=artist_uri, genre = genre, topsong1= track_names[0], topsong2=track_names[1], topsong3=track_names[2], topsong4=track_names[3], topsong5=track_names[4], similartist1 = similar_artists[0], similartist2=similar_artists[1], similartist3=similar_artists[2], albumlist= album_names)
 
 #scrape spotify with cache
+def artist_scrape_cache(art_obj):
+    '''Check the cache for a saved result for this baseurl+params:values
+    combo. If the result is found, return it. Otherwise send a new 
+    request, save it, then return it.
+    
+    Parameters
+    ----------
+    endpoint_url: string
+        API endpoint URL 
+    result_obj: dict
+        Dictionary of returned info
+    
+    Returns
+    -------
+    dict
+        query results in JSON / dict 
+    '''
+    if art_obj in CACHE_DICT.keys():
+        print("Using Cache")
+        y = CACHE_DICT[art_obj]
+        return Artist(name =y[0], uri = y[1], genre = y[2], topsong1= y[3], topsong2=y[4], topsong3 =y[5], topsong4=y[6], topsong5=y[7], similartist1=y[8], similartist2=y[10], similartist3=y[11], albumlist=y[12])
+    else:
+        print("Fetching")
+        content = spotipy_call(art_obj)
+        CACHE_DICT[art_obj] = content.jjson()
+        #print(content.title)
+        save_cache(CACHE_DICT)
+        #add_artist_to_sql(content.jjson())
+        return content
 
-
-#scrape pitchfork with cache 
-
+artist_scrape_cache('Amy Whinehouse')
+#scrape pitchfork for album reviews 
 
 #2. Extract data records from the CSV and Web API. 
+
+#scrape pitchfork with cache 
 def album_scrape_p(artist, album):
     '''takes artist and album and creates dict for each 
     album available on pitchfork 
@@ -336,41 +380,6 @@ print(f'''INSERT INTO Albums
         VALUES ("{cont[0]}", "{cont[1]}", "{cont[3]}", "{cont[4]}", "{cont[5]}", "{cont[6]}")''')
 """
 
-
-import spotipy
-import spotipy.util as util
-scope = 'user-library-read'
-
-if len(sys.argv) > 1:
-    username = sys.argv[1]
-else:
-    print("Usage: %s username" % (sys.argv[0],))
-    sys.exit()
-
-token = util.prompt_for_user_token(username, scope)
-
-if token:
-    sp = spotipy.Spotify(auth=token)
-    results = sp.current_user_saved_tracks()
-    for item in results['items']:
-        track = item['track']
-        print(track['name'] + ' - ' + track['artists'][0]['name'])
-else:
-    print("Can't get token for", username)
-
-"""def get_artist(name):
-    results = sp.search(q='artist:' + name, type='artist')
-    items = results['artists']['items']
-    if len(items) > 0:
-        return items[0]
-    else:
-        return None"""
-
-name = "radiohead" #chosen artist
-result = sp.search(name) #search query
-print(result['tracks']['items'][0]['artists'])
-#x = get_artist("Radiohead")
-#print(x)
 
 ################
 """
