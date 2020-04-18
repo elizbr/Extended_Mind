@@ -153,7 +153,7 @@ def create_db():
 	    "ArtistTitle"	TEXT)
         '''
 
-    create_artist_sql = '''CREATE TABLE "Artists" (
+    create_artist_sql = '''CREATE TABLE IF NOT EXISTS "Artists" (
 	"Id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"Name"	TEXT,
 	"SpotifyUri"	TEXT,
@@ -207,18 +207,18 @@ def spotipy_call(artist):
     for song in sp_tracks['tracks'][0:5]:
         track_names.append(song['name'])
         #track_uris.append(song['uri'])
-    print(track_names)
+    #print(track_names)
 
     genre = sp_relatedartists['artists'][0]['genres'][0]
     #print(genre)
     similar_artists = []
     #similar_a_uri = []
-    for artist in sp_relatedartists['artists'][0:3]:
-        similar_artists.append(artist['name'])
+    for arty in sp_relatedartists['artists'][0:3]:
+        similar_artists.append(arty['name'])
         #similar_a_uri.append(artist['uri'])
-    print(similar_artists)
-    print(genre)
-    print(album_names)
+    #print(similar_artists)
+    #print(genre)
+    #print(album_names)
     return Artist(name = artist, uri=artist_uri, genre = genre, topsong1= track_names[0], topsong2=track_names[1], topsong3=track_names[2], topsong4=track_names[3], topsong5=track_names[4], similartist1 = similar_artists[0], similartist2=similar_artists[1], similartist3=similar_artists[2], albumlist= album_names)
 
 #scrape spotify with cache
@@ -242,17 +242,19 @@ def artist_scrape_cache(art_obj):
     if art_obj in CACHE_DICT.keys():
         print("Using Cache")
         y = CACHE_DICT[art_obj]
-        return Artist(name =y[0], uri = y[1], genre = y[2], topsong1= y[3], topsong2=y[4], topsong3 =y[5], topsong4=y[6], topsong5=y[7], similartist1=y[8], similartist2=y[10], similartist3=y[11], albumlist=y[12])
+        #print(y)
+        return Artist(name=y[0], uri = y[1], genre = y[2], topsong1= y[3], topsong2=y[4], topsong3 =y[5], topsong4=y[6], topsong5=y[7], similartist1=y[8], similartist2=y[10], similartist3=y[11], albumlist=y[12])
     else:
         print("Fetching")
         content = spotipy_call(art_obj)
         CACHE_DICT[art_obj] = content.jjson()
-        #print(content.title)
+        #print(content.jjson())
         save_cache(CACHE_DICT)
         #add_artist_to_sql(content.jjson())
+        add_artist_to_sql(content.jjson())
         return content
 
-artist_scrape_cache('Amy Whinehouse')
+
 #scrape pitchfork for album reviews 
 
 #2. Extract data records from the CSV and Web API. 
@@ -299,6 +301,7 @@ def result_obj(artist, album):
     obj = f"{artist}_{album}"
     return obj 
 
+
 def album_scrape_cache(result_obj, artist, album):
     '''Check the cache for a saved result for this baseurl+params:values
     combo. If the result is found, return it. Otherwise send a new 
@@ -331,6 +334,8 @@ def album_scrape_cache(result_obj, artist, album):
 
 #3. Insert each extracted record into the DB, making sure that the 
 #relationships between Bars and Countries are correctly represented.
+
+#assign album info to album.sql
 def add_album_to_sql(cont):
     try:
         conn = sqlite3.connect('albums.sqlite')
@@ -353,11 +358,31 @@ def add_album_to_sql(cont):
             print("The SQLite connection is closed")
 
 
-
-#assign album info to album.sql 
-
-
 #assign artist info to artist.sql
+def add_artist_to_sql(cont):
+    insert_query = f'''INSERT INTO Artists
+        (Name, SpotifyUri, Genre, TopSong1, TopSong2, TopSong3, TopSong4, 
+        TopSong5, SimilarArtist1, SimilarArtist2, SimilarArtist3) 
+        VALUES ("{cont[0]}", "{cont[1]}", "{cont[2]}", "{cont[3]}", 
+        "{cont[4]}", "{cont[5]}", "{cont[6]}", "{cont[7]}", "{cont[8]}", 
+        "{cont[9]}", "{cont[10]}")'''
+        
+    try:
+        conn = sqlite3.connect('albums.sqlite')
+        cur = conn.cursor()
+        print("Successfully Connected to SQLite")
+
+        cur.execute(insert_query)
+        conn.commit()
+        conn.close()
+
+    except:
+        print("Failed to insert data into sqlite table")
+    finally:
+        if (conn):
+            conn.close()
+            print("The SQLite connection is closed")
+    
 
 
 # User input for artist 
@@ -370,15 +395,6 @@ import plotly.graph_objects as go
 app = Flask(__name__)
 """
 
-"""
-album = 'Sunbather'
-artist = 'Deafheaven'
-cont = album_scrape_p(artist, album).jjson()
-#print(x.edit)
-print(f'''INSERT INTO Albums
-        (AlbumTitle, AlbumLabel, AlbumCover, Year, AlbumScore, ArtistTitle) 
-        VALUES ("{cont[0]}", "{cont[1]}", "{cont[3]}", "{cont[4]}", "{cont[5]}", "{cont[6]}")''')
-"""
 
 
 ################
@@ -386,10 +402,29 @@ print(f'''INSERT INTO Albums
 if __name__ == "__main__":
     CACHE_DICT = open_cache()
     create_db()
-    artist = input(f"What is your artist pick?")
-    album = input("album: ")
+    switch = 'one'
+    while switch == 'one':
+        artist = input(f"What is your artist pick?")
+        try: 
+            people = artist_scrape_cache(artist)
+            switch = 'two'
+        except:
+            print("Try again")
 
-    obj = result_obj(artist, album)
-    v = album_scrape_cache(obj, artist, album)
-        
-"""
+    all_albums = people.list_of_albums()
+    for a in all_albums:
+        try: 
+            print('one')
+            obj = result_obj(artist, a)
+            print('two')
+            if obj in CACHE_DICT.keys():
+                print('already json-ed')
+                pass
+            else:
+                print('three')
+                album_scrape_cache(obj, artist, a)
+        except:
+            print('passing at except')
+            pass
+    #print(len(albums_folder))
+        """
