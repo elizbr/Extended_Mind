@@ -140,19 +140,11 @@ def create_db():
     #drop_bars_sql = 'DROP TABLE IF EXISTS "Bars"'
     #drop_countries_sql = 'DROP TABLE IF EXISTS "Countries"'
 
-    create_album_sql = '''
-        CREATE TABLE IF NOT EXISTS "Albums" (
-	    "Id"	INTEGER PRIMARY KEY AUTOINCREMENT,
-	    "AlbumTitle"	TEXT,
-	    "AlbumLabel"	TEXT,
-	    "AlbumEditorial"	TEXT,
-	    "AlbumCover"	TEXT,
-        "Year"      NUMERIC,
-	    "AlbumScore"	NUMERIC,
-	    "ArtistTitle"	TEXT)
-        '''
+    target = '''PRAGMA foreign_keys = ON;'''
 
-    create_artist_sql = '''CREATE TABLE IF NOT EXISTS "Artists" (
+    create_artist_sql = '''
+
+    CREATE TABLE IF NOT EXISTS "Artists" (
 	"Id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"Name"	TEXT,
 	"SpotifyUri"	TEXT,
@@ -164,12 +156,26 @@ def create_db():
 	"TopSong5"	TEXT,
 	"SimilarArtist1"	TEXT,
 	"SimilarArtist2"	TEXT,
-	"SimilarArtist3"	TEXT)
-    '''
+	"SimilarArtist3"	TEXT)'''
+
+    create_album_sql = '''
+            CREATE TABLE IF NOT EXISTS "Albums" (
+	    "Id"	INTEGER PRIMARY KEY AUTOINCREMENT,
+	    "AlbumTitle"	TEXT,
+	    "AlbumLabel"	TEXT,
+	    "AlbumEditorial"	TEXT,
+	    "AlbumCover"	TEXT,
+        "Year"      NUMERIC,
+	    "AlbumScore"	NUMERIC,
+	    "ArtistId"	INTEGER NOT NULL,
+        FOREIGN KEY (ArtistId)
+        REFERENCES Artists (Id) 
+        );'''
 
     #cur.execute(drop_bars_sql)
     #cur.execute(drop_countries_sql)
 
+    cur.execute(target)
     cur.execute(create_artist_sql)
     cur.execute(create_album_sql)
 
@@ -341,10 +347,12 @@ def add_album_to_sql(cont):
         cur = conn.cursor()
         print("Successfully Connected to SQLite")
 
-        insert_query = f'''INSERT INTO Albums
-        (AlbumTitle, AlbumLabel, AlbumCover, Year, AlbumScore, ArtistTitle) 
-        VALUES ("{cont[0]}", "{cont[1]}", "{cont[3]}", {cont[4]}, {cont[5]}, "{cont[6]}")'''
 
+        insert_query = f'''INSERT INTO Albums
+        (AlbumTitle, AlbumLabel, AlbumCover, Year, AlbumScore, ArtistId) 
+        VALUES ("{cont[0]}", "{cont[1]}", "{cont[3]}", {cont[4]}, {cont[5]}, (SELECT Id from Artists WHERE Name = "{cont[6]}"));
+        '''
+        print(insert_query)
         cur.execute(insert_query)
         conn.commit()
         conn.close()
@@ -365,7 +373,9 @@ def add_artist_to_sql(cont):
         VALUES ("{cont[0]}", "{cont[1]}", "{cont[2]}", "{cont[3]}", 
         "{cont[4]}", "{cont[5]}", "{cont[6]}", "{cont[7]}", "{cont[8]}", 
         "{cont[9]}", "{cont[10]}")'''
-        
+
+    print(insert_query)
+
     try:
         conn = sqlite3.connect('albums.sqlite')
         cur = conn.cursor()
