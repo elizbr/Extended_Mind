@@ -1,0 +1,41 @@
+  
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF8"/>
+    <title>Response Results</title>
+</head>
+<body>
+    <h1>{{name}}</h1>
+    <h3>Secret: {{secret}}</h3>
+
+    <h1>Albums:</h1>
+    <ol>
+    {% for x in years %}
+        <ul>{{x}}</ul>
+    {% endfor %}
+    </ol>
+
+
+
+{% if make_graph != 0 %}
+    <h1>Here are your results!</h1>
+    <table>
+        <tr>
+            <th>Album Name</th>
+            <th>{{sort}}</th>
+        </tr>
+        {% for row in results %}
+        <tr>
+            <td>{{row[0]}}</td>
+            <td>{{row[1]}}</td>
+            <td>{{row[2]}}</td>
+        </tr>
+        {% endfor %}
+{% endif %}
+    </table>
+
+</body>
+</html>
+
+

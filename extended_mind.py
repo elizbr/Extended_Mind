@@ -30,6 +30,10 @@ client_credentials_manager = SpotifyClientCredentials(client_id=client_id, clien
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager) #spotify object to access API
 
 
+
+
+
+
 #classes 
 class Album:
     '''an album
@@ -394,6 +398,24 @@ def add_artist_to_sql(cont):
     
 
 
+def get_albums_by_rating(artist):
+    conn = sqlite3.connect('albums.sqlite')
+    cur = conn.cursor()
+    q = f'''
+        SELECT AlbumTitle, Year, AlbumScore
+        FROM Albums
+        JOIN Artists
+        ON Albums.ArtistId=Artists.Id
+        Where Artists.Name = "{artist}"
+        ORDER BY Year DESC
+    '''
+    print(q)
+    results = cur.execute(q).fetchall()
+    conn.close()
+    return results
+
+
+
 # User input for artist 
 #flask interfact for user 
 """
@@ -405,35 +427,5 @@ app = Flask(__name__)
 """
 
 
-
-################
-
-if __name__ == "__main__":
-    CACHE_DICT = open_cache()
-    create_db()
-    switch = 'one'
-    while switch == 'one':
-        artist = input(f"What is your artist pick?")
-        try: 
-            people = artist_scrape_cache(artist)
-            switch = 'two'
-        except:
-            print("Try again")
-
-    all_albums = people.list_of_albums()
-    for a in all_albums:
-        try: 
-            print('one')
-            obj = result_obj(artist, a)
-            print('two')
-            if obj in CACHE_DICT.keys():
-                print('already json-ed')
-                pass
-            else:
-                print('three')
-                album_scrape_cache(obj, artist, a)
-        except:
-            print('passing at except')
-            pass
-    #print(len(albums_folder))
- 
+x = get_albums_by_rating("Adele")
+print(x)
