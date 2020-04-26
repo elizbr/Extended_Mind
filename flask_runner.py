@@ -23,20 +23,28 @@ import colorlover as cl
 from flask import Flask, render_template, request
 app = Flask(__name__)
 
+
 @app.route('/')
 def index():
+    os.environ["SPOTIPY_CLIENT_ID"] = secrets.spotify_id
+    os.environ["SPOTIPY_CLIENT_SECRET"] = secrets.spotify_secret
     return render_template('index.html') # just the static HTML
 
 @app.route('/handle_form', methods=['POST'])
 def handle_the_form():
+    em.create_db()
+    em.open_cache(em.CACHE_FILENAME)
     artist = request.form["name"]
     color = request.form["colors"]
 
     try:
         people = em.artist_scrape_cache(artist)
+        #print("here")
+        #print(people.albumlist)
         failed = 0
         try: 
             all_albums = people.list_of_albums()
+            #print(all_albums)
         except:
             all_albums = 0
     except:
@@ -48,26 +56,33 @@ def handle_the_form():
         for a in all_albums:
             try: 
                 #print(f" Album: {a}")
+                #print(a)
                 obj = em.result_obj(artist, a)
+                #print("here")
                 #print('Searching Cache')
                 if obj in em.CACHE_DICT.keys():
                     #print(f"Found {a}.")
-                    album = em.Album(CACHE_DICT[obj])
+                    album = em.Album(em.CACHE_DICT[obj])
+                    print("here")
                     album_json_contents.append(album)
+                    print("here")
                     failed = 0 
                 else:
                     #print(f"Creating {a}.")
                     album = em.album_scrape_cache(obj, artist, a)
+                    print("kkkkhere")
                     album_json_contents.append(album)
+                    print("kkkkhere")
                     failed = 0 
             except:
                 failed = 1 
+                print("failed here")
                 #print(f'Trouble while looking for {a}.')
     elif all_albums == 0:
         failed = 1 
+        print("total fail")
     
     if failed == 0:
-
         ratings = []
         album_titles = [] 
         reviews = [] 
@@ -75,9 +90,9 @@ def handle_the_form():
 
         for album_l in album_json_contents:
             try: 
-                years.append(album_l[-3])
-                album_titles.append(album_l[1])
-                ratings.append(album_l[-2])
+                years.append(album_l.year)
+                album_titles.append(album_l.title)
+                ratings.append(album_l.rating)
                 reviews.append(album_l[2])
             except:
                 years.append("No Year")

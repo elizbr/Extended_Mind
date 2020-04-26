@@ -13,12 +13,25 @@
         
             Pick A Place:
             <select name="colors">
-                <option value="green">Desert</option>
-                <option value="blue">Valley</option>
-                <option value="red">Lake</option>
+                <option value="desert">Desert</option>
+                <option value="valley">Valley</option>
+                <option value="lake">Lake</option>
             </select>
 
+            <p>
+                What type of info would you like to see?<br>
+                <input type="radio" name="choices" value="Album">Album Visual<br/>
+                <input type="radio" name="choices" value="Artist">Artist Info<br/>
+                <input type="radio" name="choices" value="Review">Review Info<br/>
+                <input type="radio" name="choices" value="All">All of It<br/>
+            </p>
+
         </p>
+        <br>
+
+
+        <input type="submit" value="Submit Form"/>
+    </form>
 <br>
 
         <h2>Alfred Gell’s anthropological theory in Art and Agency leaves a<br>
@@ -35,14 +48,11 @@
 
 
 <br>
-            <p>Try. . . .</p>
+           
+Most Popular Search: {{high}}<br>
+       Try: Radiohead | Deafheaven | Chairlift | King Princess</p>
 
 
-        <p>Radiohead | Deafheaven | Chairlift | Nine Inch Nails</p>
 
-
-
-        <input type="submit" value="Submit Form"/>
-    </form>
 </body>
 </html>

@@ -89,15 +89,15 @@ class Artist:
     
     def list_of_albums(self):
         '''returns list of str albums'''
-        albums = self.albumlist.split(',')
-        return albums 
+        albums = self.albumlist.strip().split(',')
+        return albums
     
 
 # set up cache
 CACHE_FILENAME = 'cache.json'
 CACHE_DICT = {}
 
-def open_cache():
+def open_cache(CACHE_FILENAME):
     ''' Opens the cache file if it exists and loads the JSON into
     the CACHE_DICT dictionary.
     If the cache file doesn't exist, creates a new cache dictionary
@@ -120,7 +120,7 @@ def open_cache():
         cache_dict = {}
     return cache_dict
 
-def save_cache(cache_dict):
+def save_cache(CACHE_FILENAME, cache_dict):
     ''' Saves the current state of the cache to disk
     
     Parameters
@@ -256,10 +256,9 @@ def artist_scrape_cache(art_obj):
     else:
         print("Fetching")
         content = spotipy_call(art_obj)
+        print('ok')
         CACHE_DICT[art_obj] = content.jjson()
-        #print(content.jjson())
-        save_cache(CACHE_DICT)
-        #add_artist_to_sql(content.jjson())
+        save_cache(CACHE_FILENAME, CACHE_DICT)
         add_artist_to_sql(content.jjson())
         return content
 
@@ -335,9 +334,9 @@ def album_scrape_cache(result_obj, artist, album):
     else:
         print("Fetching")
         content = album_scrape_p(artist, album)
-        CACHE_DICT[result_obj] = content.jjson()
-        #print(content.title)
-        save_cache(CACHE_DICT)
+        result = result_obj(artist, album)
+        CACHE_DICT[result] = content.jjson()
+        save_cache(CACHE_FILENAME, CACHE_DICT)
         add_album_to_sql(content.jjson())
         y = CACHE_DICT[result_obj]
         return Album(title=y[0], label=y[1], edit = y[2], cover = y[3], year = y[4], rating = y[5], artist = y[6])
@@ -353,11 +352,11 @@ def add_album_to_sql(cont):
         print("Successfully Connected to SQLite")
 
 
-        insert_query = f'''INSERT INTO Albums
+        insert_query = f'''INSERT OR REPLACE INTO Albums
         (AlbumTitle, AlbumLabel, AlbumCover, Year, AlbumScore, ArtistId) 
         VALUES ("{cont[0]}", "{cont[1]}", "{cont[3]}", {cont[4]}, {cont[5]}, (SELECT Id from Artists WHERE Name = "{cont[6]}"));
         '''
-        print(insert_query)
+        #print(insert_query)
         cur.execute(insert_query)
         conn.commit()
         conn.close()
@@ -372,14 +371,14 @@ def add_album_to_sql(cont):
 
 #assign artist info to artist.sql
 def add_artist_to_sql(cont):
-    insert_query = f'''INSERT INTO Artists
+    insert_query = f'''INSERT OR REPLACE INTO Artists
         (Name, SpotifyUri, Genre, TopSong1, TopSong2, TopSong3, TopSong4, 
         TopSong5, SimilarArtist1, SimilarArtist2, SimilarArtist3) 
         VALUES ("{cont[0]}", "{cont[1]}", "{cont[2]}", "{cont[3]}", 
         "{cont[4]}", "{cont[5]}", "{cont[6]}", "{cont[7]}", "{cont[8]}", 
         "{cont[9]}", "{cont[10]}")'''
 
-    print(insert_query)
+    #print(insert_query)
 
     try:
         conn = sqlite3.connect('albums.sqlite')
@@ -441,7 +440,3 @@ import plotly.graph_objects as go
 
 app = Flask(__name__)
 """
-
-
-x = get_albums_by_rating("Adele")
-print(x)
