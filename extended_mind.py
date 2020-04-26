@@ -339,7 +339,8 @@ def album_scrape_cache(result_obj, artist, album):
         #print(content.title)
         save_cache(CACHE_DICT)
         add_album_to_sql(content.jjson())
-        return CACHE_DICT[result_obj]
+        y = CACHE_DICT[result_obj]
+        return Album(title=y[0], label=y[1], edit = y[2], cover = y[3], year = y[4], rating = y[5], artist = y[6])
 
 #3. Insert each extracted record into the DB, making sure that the 
 #relationships between Bars and Countries are correctly represented.
@@ -409,7 +410,22 @@ def get_albums_by_rating(artist):
         Where Artists.Name = "{artist}"
         ORDER BY Year DESC
     '''
-    print(q)
+    #print(q)
+    results = cur.execute(q).fetchall()
+    conn.close()
+    return results
+
+
+def get_artist_top_tracks(artist):
+    conn = sqlite3.connect('albums.sqlite')
+    cur = conn.cursor()
+    q = f'''
+        SELECT *
+        FROM Artists
+        Where Artists.Name = "{artist}"
+        LIMIT 1
+    '''
+    #print(q)
     results = cur.execute(q).fetchall()
     conn.close()
     return results

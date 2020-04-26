@@ -17,6 +17,8 @@ import json
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials #To access authorised Spotify data
 import extended_mind as em 
+import plotly
+import colorlover as cl
 
 from flask import Flask, render_template, request
 app = Flask(__name__)
@@ -28,7 +30,6 @@ def index():
 @app.route('/handle_form', methods=['POST'])
 def handle_the_form():
     artist = request.form["name"]
-    secret = request.form["secret"]
     color = request.form["colors"]
 
     try:
@@ -83,47 +84,51 @@ def handle_the_form():
                 album_titles.append("No Title")
                 ratings.append("No Rating")
                 reviews.append("No Review")
+            
 
-        results = em.get_albums_by_rating('Deafheaven')
+
+        results = em.get_albums_by_rating(artist)
         if len(results) != 0:
             make_graph = 1
         elif len(results) == 0:
             make_graph = 0
 
+
+        x_vals = album_titles
+        y_vals = ratings
+        bars_data = go.Bar(
+                x=x_vals,
+                y=y_vals
+                )
+        fig = go.Figure(data=bars_data)
+        div = fig.to_html(full_html=False)
+
+
+        tracks = em.get_artist_top_tracks(artist)
+        top_tracks = tracks[0][4:8]
+        genre = tracks[0][3]
+        similar_artists = tracks[0][9:11]
+        
+
         return render_template('response.html', 
-            name=artist, 
-            secret=secret,
+            name=artist,
             list_albums = all_albums,
             color=color, 
             contents = album_json_contents, 
             years = years,
+            genre = genre,
             album_titles = album_titles,
+            similar_artists = similar_artists,
             ratings = ratings, 
             reviews = reviews, 
             results = results,
-            make_graph = make_graph) 
+            make_graph = make_graph,
+            plot_div=div) 
+
     elif failed == 1: 
         return render_template('invalid_response.html', 
-            name=artist, 
-            secret=secret,
+            name=artist,
             color=color) 
-
-
-@app.route('/results')
-def res():
-    conn = sqlite3.connect('albums.sqlite')
-    cur = conn.cursor()
-    q = '''
-        SELECT AlbumTitle, Rating
-        FROM Albums
-        ORDER BY Year DESC
-        LIMIT 5
-    '''
-    cur.execute(q)
-
-    bars = cur.fetchall()
-
-    return render_template('results.html', bars=bars)
 
 
 

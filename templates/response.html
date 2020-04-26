@@ -7,33 +7,37 @@
 </head>
 <body>
     <h1>{{name}}</h1>
-    <h3>Secret: {{secret}}</h3>
-
-    <h1>Albums:</h1>
-    <ol>
-    {% for x in years %}
-        <ul>{{x}}</ul>
-    {% endfor %}
-    </ol>
 
 
 
 {% if make_graph != 0 %}
-    <h1>Here are your results!</h1>
+    <h3>Here are your results!</h3>
+    <h3>Genre:</h3> <p>{{genre}}</p>
     <table>
         <tr>
-            <th>Album Name</th>
+            <th>Similar Artists</th>
             <th>{{sort}}</th>
         </tr>
-        {% for row in results %}
+        {% for row in similar_artists[0:-2] %}
         <tr>
-            <td>{{row[0]}}</td>
-            <td>{{row[1]}}</td>
-            <td>{{row[2]}}</td>
+            <td>{{row}}</td>
         </tr>
         {% endfor %}
 {% endif %}
     </table>
+
+{% if make_graph != 0 %}}
+    <h3>{{name}}'s album ratings</h3>
+    {{plot_div | safe}}
+    <i>(I hope you liked it)</i>
+
+{% endif %}
+
+Top Tacks! 
+{% for track in top_tracks %}
+<ul>{{track}}</ul>
+{% endfor %}
+
 
 </body>
 </html>
