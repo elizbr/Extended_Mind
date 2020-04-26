@@ -1,1 +1,26 @@
-<p>Album</p>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF8"/>
+    <title>Album Results</title>
+
+</head>
+<body style="background-color: {{palette}}"></body>
+
+<p>Album Results</p>
+<p><b>Artist:</b> {{name}}</h2>
+
+    <p>
+        <h4>Albums</h4> {%for s in album_names %}
+        <li>{{s[0]}}</li>
+        {% endfor %}
+        </p> 
+            {{plot_div | safe}}
+            
+
+
+
+
+
+</body>

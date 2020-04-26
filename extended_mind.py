@@ -89,8 +89,15 @@ class Artist:
     
     def list_of_albums(self):
         '''returns list of str albums'''
-        albums = self.albumlist.strip().split(',')
-        return albums
+        albums = self.albumlist.split(',')
+        clean_albums = [] 
+        for x in albums:
+            try: 
+                y = x.strip()
+                clean_albums.append(y)
+            except:
+                pass
+        return clean_albums
     
 
 # set up cache
@@ -268,7 +275,7 @@ def artist_scrape_cache(art_obj):
 #2. Extract data records from the CSV and Web API. 
 
 #scrape pitchfork with cache 
-def album_scrape_p(artist, album):
+def album_scrape_p(name, album):
     '''takes artist and album and creates dict for each 
     album available on pitchfork 
     Parameters:
@@ -278,31 +285,51 @@ def album_scrape_p(artist, album):
     _album_content <Album> - contains all info 
     necessary for db add 
     '''
-    p = pitchfork.search(artist, album) # the title is autocompleted
-    x = p.year()
-    if len(x) != 4:
+    p = pitchfork.search(name, album) # the title is autocompleted
+    try: 
         try: 
-            y = x.split('-').strip()
-            x = y[0]
-            x = int(x)
+            x = p.year()
         except:
             x = 0000
-    
-    g = p.editorial()
-    mf = g.replace('/','')
-
-        
-    title = p.album() # the full album title
-    label = p.label()
-    edit = mf
-    rating = p.score()
-    artist = p.artist()
-    year = int(x)
-    try: 
-        cover = p.cover()
-    except:
-        cover = 'None'
-    return Album(title= title, label = label, edit= edit, cover = cover, year = year, rating = rating, artist = artist)
+        if len(x) != 4:
+            try: 
+                y = x.split('-').strip()
+                x = y[0]
+                x = int(x)
+            except:
+                x = 0000
+        try:
+            g = p.editorial()
+            #mf = g.replace('/','')
+        except:
+            g = "No Review"
+        try:
+            title = p.album() # the full album title
+        except:
+            title = album
+        try:
+            label = p.label()
+        except:
+            label = 'No Label'
+        try:
+            rating = p.score()
+        except:
+            rating = 5.0
+        try:
+            artist = p.artist()
+        except:
+            artist = name
+        try: 
+            year = int(x)
+        except:
+            year = 0000
+        try: 
+            cover = p.cover()
+        except:
+            cover = 'None'
+    except: 
+        print('ERROR')
+    return Album(title= title, label = label, edit= g, cover = cover, year = year, rating = rating, artist = artist)
 
 
 def result_obj(artist, album):

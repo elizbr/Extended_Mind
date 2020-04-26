@@ -1,1 +1,18 @@
-<html><p> Review</p></html>
+  
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF8"/>
+    <title>Artist Results</title>
+
+</head>
+<body style="background-color: {{palette}}"></body>
+<p>Album Results</p>
+<h2>{{name}} Album Reviews from Pitchfork</h2>
+
+{% for x in review_list %}
+<h3>{{x[0]}}</h3>
+<p>{{x[1]}}</p>
+{% endfor %}
+</body>
+</html>

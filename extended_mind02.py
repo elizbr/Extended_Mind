@@ -24,6 +24,14 @@ CACHE_DICT = {}
 REVIEW_CACHE = 'reviews.json'
 REVIEW_DICT = {}
 
+
+
+
+    
+
+
+
+
 #back up fxns
 def get_artist_info_from_sql(artist):
     '''return stored artist info'''
@@ -35,6 +43,16 @@ def get_artist_info_from_sql(artist):
         WHERE name IS "{artist}"
         '''
     cur.execute(q)
+
+
+
+# Python code to remove duplicate elements >> https://www.geeksforgeeks.org/python-remove-duplicates-list/
+def Remove(duplicate): 
+    final_list = [] 
+    for num in duplicate: 
+        if num not in final_list: 
+            final_list.append(num) 
+    return final_list 
 
 
 
@@ -93,6 +111,7 @@ def handle_the_form():
     print(1)
     em.create_db()
     CACHE_DICT = em.open_cache(CACHE_FILENAME)
+    REVIEW_DICT = em.open_cache(REVIEW_CACHE)
 
     #set variables
     name = request.form["name"]
@@ -100,16 +119,22 @@ def handle_the_form():
     choice = request.form["choices"]
     print(2)
 
+    
+
+
     #### CHECK SELECTIONS
     #user's COLOR choices 
     if color == 'desert':
-        palette = 0 #desert_colors 
+        palette = "darkgoldenrod"#darkgoldenrod"
+        plot_c = 'brown'
     elif color == 'valley':
-        palette = 1 #lake_colors 
+        palette = 'greenyellow'  #'greenyellow' 
+        plot_c = 'green'
     elif color == 'lake':
-        palette = 2 #valley_colors 
+        palette = 'rgb(32, 80, 160)'
+        plot_c = 'navy'
     else: 
-        palette = 0
+        palette = 'white'
     print(3)
     
 
@@ -119,17 +144,99 @@ def handle_the_form():
         CACHE_DICT[name] = CACHE_DICT[name] + 1
         em.save_cache(CACHE_FILENAME, CACHE_DICT)
         print("Already In Cache, +1")
+        query1 = f'''Select AlbumTitle FROM Albums Join Artists ON Albums.ArtistId = Artists.Id
+        WHERE Artists.Name IS "{name}"'''
+        try: 
+            album_names = pull_content_sql(query1)
+        except: 
+            album_names = "No Album Information"
     else:
+        album_names = [] 
         get_content = em.spotipy_call(name)
         CACHE_DICT[name] = 1
         em.save_cache(CACHE_FILENAME, CACHE_DICT)
         em.add_artist_to_sql(get_content.jjson())
         print("Adding to Cache, = 1")
-      
+        albums = get_content.list_of_albums()
+        print(albums)
+        for x in albums:
+            #print(x)
+            if x == '':
+                pass            
+            else:
+                try: 
+                    print(x)
+                    unique_key = f"{name}_{x}"
+                    g = em.pitchfork.search(name, x)
+                    try:
+                        album_review = g.editorial()
+                    except:
+                        album_review = 'No Review'
+                    album_names.append(x)
+                    #print(album_review)
+                    REVIEW_DICT[unique_key] = album_review
+                    em.save_cache(REVIEW_CACHE, REVIEW_DICT)
+                    #add sql 
+                    try: 
+                        after_g = em.album_scrape_p(name, x)
+                        em.add_album_to_sql(after_g.jjson())
+                    except: 
+                        print("this is fucked.")
+                except: 
+                    unique_key = f"{name}_{x}"
+                    REVIEW_DICT[unique_key] = 'No Review'
+                    print('No Review Found, line 150 ish')
+                    em.save_cache(REVIEW_CACHE, REVIEW_DICT)
+                    try: 
+                        #add sql 
+                        #album_names.append(g.title)
+                        em.add_album_to_sql(after_g.jjson())
+                    except:
+                        pass
+    
+    final_albums = Remove(album_names)
 
     #user's INFO choices
     if choice == 'Album':
+        
         template = 'album.html'
+        query_albumratings = f'''
+        SELECT AlbumScore FROM Albums JOIN Artists
+        ON Albums.ArtistId = Artists.Id
+        WHERE Artists.name = "{name}"
+        ORDER BY Year ASC'''      
+
+        query_albumtitles = f'''
+        SELECT AlbumTitle FROM Albums JOIN Artists
+        ON Albums.ArtistId = Artists.Id
+        WHERE Artists.name = "{name}"
+        ORDER BY Year ASC''' 
+
+        query_albumyears = f'''
+        SELECT Year FROM Albums JOIN Artists
+        ON Albums.ArtistId = Artists.Id
+        WHERE Artists.name = "{name}"
+        ORDER BY Year ASC''' 
+
+        x_vals = []
+        y_vals = []
+        x_vals_needs = pull_content_sql(query_albumtitles)
+        for x in x_vals_needs:
+            x_vals.append(x[0]) #(query_albumtitles) 
+        y_vals_needs = pull_content_sql(query_albumratings)
+        for y in y_vals_needs:
+            y_vals.append(y[0]) #(query_albumtitles) 
+        print(x_vals, y_vals)
+        bars_data = go.Scatter(
+                x=x_vals,
+                y=y_vals,
+                marker_color= plot_c
+                )
+        fig = go.Figure(data=bars_data)
+        fig.update_yaxes(tickvals=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
+        div = fig.to_html(full_html=False)
+
+        return render_template(template, name = name, color = color, palette = palette, album_names = final_albums, plot_div=div)
     elif choice == 'Artist':
         template = 'artist.html'
         TTq = sql_query_builder('artist', "TT", name)
@@ -141,6 +248,14 @@ def handle_the_form():
         return render_template(template, name = name, color = color, palette = palette, SA = pull_content_sql(SAq), G = pull_content_sql(Gq), TT = pull_content_sql(TTq))
     elif choice == 'Review':
         template = 'review.html'
+        review_list = []
+        for k,v in REVIEW_DICT.items():
+            if k.split('_')[0] == name:
+                title = k.split('_')[1]
+                body = v.replace(r'/', '')
+                album_entry = [title, body]
+                review_list.append(album_entry)
+        return render_template(template, name=name, color = color, palette = palette, review_list = review_list)
     elif choice == 'All':
         template = 'all.html'
     else:
@@ -174,3 +289,6 @@ if __name__ == "__main__":
     #Print list of albums 
     #print genre 
     #print print similar artists 
+
+
+ 

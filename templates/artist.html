@@ -1,6 +1,37 @@
-<p>Artist</p>
+  
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF8"/>
+    <title>Artist Results</title>
+
+</head>
+<body style="background-color: {{palette}}"></body>
+<p>Artist Results</p>
+<h2>{{name}}</h2>
+
 <p>
-{% for s in SA %}
-{{s[0]}}
+    <p><b>Genre</b> {%for s in G %}{{s[0].upper()}}{% endfor %}</p> 
+    </p>
+
+
+    <p>
+        <h4>Top Tracks</h4> {%for s in TT %}
+        <li>{{s[0]}}</li>
+        <li>{{s[1]}}</li>
+        <li>{{s[2]}}</li>
+        <li>{{s[3]}}</li>
+        <li>{{s[4]}}</li>
+        {% endfor %}
+        </p>
+
+
+<p>
+<h4>Similar Artists</h4> {%for s in SA %}
+<li>{{s[0]}}</li>
+<li>{{s[1]}}</li>
+<li>{{s[2]}}</li>
 {% endfor %}
 </p>
+</body>
+</html>
