@@ -1,0 +1,32 @@
+Hello, Welcome to Extended Mind. 
+This project was impart inspired by Alfred Gell's anthropological theory found in his book, Art & Agency. Essentially, he proposed that the creative and productive work of artists spanned more than a one-way timeline and really took on a x & y dimensional status. While this project does not break down agency and forms, It does bring the idea of dimenstionality to a typical timeline view of an artists output. 
+
+Requirements to Run: 
+APIs & Authorization:
+- Spotify API (Client Authorization & Secret)
+- Spotipy - Python Library for Spotify API calls 
+- Pitchfork API - no-credentials needs, just the library download 
+- Beautiful Soup - Required by Pitchfork API 
+
+Other 
+- sys
+- os 
+- Plotly
+- requests
+- sqlite3 
+- lxml
+- flask 
+
+Interaction Specs:
+- Download and install necessary Libraries.
+- Acquire Access to Spotify API and save them in a separate py file in the same folder called 'secrets.py' 
+- Run 'ExtendedMind02.py'
+- You will be prompted to open the flask applicaiton in the dev server 
+- Follow the prompts for inputting artist terms. 
+- Play around with the 'place' or color options for the result page. 
+- Choose an information return: Album Reviews, Artist Info, Album Visualization or Summary. 
+- Rinse & Repeat. 
+- See your most - searched term at the bottom of the '/' page.
+
+Thank you. See you soon. 
+
