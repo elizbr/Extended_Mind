@@ -6,7 +6,7 @@
     <title>Album Results</title>
 
 </head>
-<body style="background-color: {{palette}}"></body>
+<body style="background-color: {{palette}}">
 
 <p>Album Results</p>
 <p><b>Artist:</b> {{name}}</h2>
@@ -16,11 +16,16 @@
         <li>{{s[0]}}</li>
         {% endfor %}
         </p> 
+
+
+     {% if warning == 0 %}   
             {{plot_div | safe}}
-            
+    {% endif %}
 
 
-
+    {% if warning == 1 %}   
+            <p>Pitchfork does not support this artist, sadly. Try again.</p>
+    {% endif %}
 
 
 </body>

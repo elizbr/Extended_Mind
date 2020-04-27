@@ -1,1 +1,59 @@
-<p>Alll </p>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF8"/>
+    <title>Artist & Album Content</title>
+
+</head>
+<body style="background-color: {{palette}}">
+
+<h2>{{name}}</h2>
+
+<p><b>Genre</b> {%for s in G %}{{s[0].upper()}}{% endfor %}</p> 
+<p><h4>Top Tracks</h4> {%for s in TT %}
+        <li>{{s[0]}}</li>
+        <li>{{s[1]}}</li>
+        <li>{{s[2]}}</li>
+        <li>{{s[3]}}</li>
+        <li>{{s[4]}}</li>
+        {% endfor %}</p>
+
+<p><h4>Similar Artists</h4> {%for s in SA %}
+<li>{{s[0]}}</li>
+<li>{{s[1]}}</li>
+<li>{{s[2]}}</li>
+{% endfor %}</p>
+
+
+
+
+<p><b>Artist:</b> {{name}}</h2>
+
+    <p> <h4>Albums</h4> {%for s in album_names %}
+        <li>{{s[0]}}</li>
+        {% endfor %}</p> 
+
+     {% if warning == 0 %}   
+            {{plot_div | safe}}
+    {% endif %}
+
+    {% if warning == 1 %}  
+    <b> No Ratings Graph Available,</b> 
+            <p>Pitchfork does not support this artist, sadly. Try again.</p>
+    {% endif %}
+
+
+
+
+
+<h2>{{name}} Album Reviews from Pitchfork</h2>
+{% for x in review_list %}
+{% if x[0] != 'No Review' %}
+<h3>{{x[0]}}</h3>
+<p>{{x[1][:160]}}...</p>
+{% endif %}
+{% endfor %}
+
+</body>
+</html>

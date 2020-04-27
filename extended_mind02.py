@@ -157,8 +157,8 @@ def handle_the_form():
         em.save_cache(CACHE_FILENAME, CACHE_DICT)
         em.add_artist_to_sql(get_content.jjson())
         print("Adding to Cache, = 1")
-        albums = get_content.list_of_albums()
-        print(albums)
+        aaaa = get_content.list_of_albums()
+        albums = Remove(aaaa)
         for x in albums:
             #print(x)
             if x == '':
@@ -196,28 +196,28 @@ def handle_the_form():
     
     final_albums = Remove(album_names)
 
-    #user's INFO choices
-    if choice == 'Album':
-        
-        template = 'album.html'
-        query_albumratings = f'''
+
+    query_albumratings = f'''
         SELECT AlbumScore FROM Albums JOIN Artists
         ON Albums.ArtistId = Artists.Id
         WHERE Artists.name = "{name}"
         ORDER BY Year ASC'''      
 
-        query_albumtitles = f'''
+    query_albumtitles = f'''
         SELECT AlbumTitle FROM Albums JOIN Artists
         ON Albums.ArtistId = Artists.Id
         WHERE Artists.name = "{name}"
         ORDER BY Year ASC''' 
 
-        query_albumyears = f'''
+    query_albumyears = f'''
         SELECT Year FROM Albums JOIN Artists
         ON Albums.ArtistId = Artists.Id
         WHERE Artists.name = "{name}"
-        ORDER BY Year ASC''' 
+        ORDER BY Year ASC'''
 
+    #user's INFO choices
+    if choice == 'Album': 
+        template = 'album.html'
         x_vals = []
         y_vals = []
         x_vals_needs = pull_content_sql(query_albumtitles)
@@ -226,17 +226,25 @@ def handle_the_form():
         y_vals_needs = pull_content_sql(query_albumratings)
         for y in y_vals_needs:
             y_vals.append(y[0]) #(query_albumtitles) 
-        print(x_vals, y_vals)
+        if len(x_vals) < 1 :
+            warning = 1
+        else:
+            warning = 0
         bars_data = go.Scatter(
-                x=x_vals,
-                y=y_vals,
-                marker_color= plot_c
-                )
+            x=x_vals,
+            y=y_vals,
+            marker_color= plot_c)
         fig = go.Figure(data=bars_data)
         fig.update_yaxes(tickvals=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
+        fig.update_layout(
+            title=f"Pitchfork's Album Ratings for {name}",
+            xaxis_title="Albums",
+            yaxis_title="Album Rating (0-10)") 
+        
         div = fig.to_html(full_html=False)
 
-        return render_template(template, name = name, color = color, palette = palette, album_names = final_albums, plot_div=div)
+        return render_template(template, name = name, color = color, palette = palette, album_names = final_albums, plot_div=div, warning = warning)
+    
     elif choice == 'Artist':
         template = 'artist.html'
         TTq = sql_query_builder('artist', "TT", name)
@@ -246,6 +254,7 @@ def handle_the_form():
         print(SA)
         print(TTq, Gq, SAq)
         return render_template(template, name = name, color = color, palette = palette, SA = pull_content_sql(SAq), G = pull_content_sql(Gq), TT = pull_content_sql(TTq))
+    
     elif choice == 'Review':
         template = 'review.html'
         review_list = []
@@ -254,10 +263,61 @@ def handle_the_form():
                 title = k.split('_')[1]
                 body = v.replace(r'/', '')
                 album_entry = [title, body]
-                review_list.append(album_entry)
+                if body != 'No Review':
+                    review_list.append(album_entry)
         return render_template(template, name=name, color = color, palette = palette, review_list = review_list)
+    
     elif choice == 'All':
         template = 'all.html'
+        
+        #album 
+        x_vals = []
+        y_vals = []
+        x_vals_needs = pull_content_sql(query_albumtitles)
+        for x in x_vals_needs:
+            x_vals.append(x[0]) #(query_albumtitles) 
+        y_vals_needs = pull_content_sql(query_albumratings)
+        for y in y_vals_needs:
+            y_vals.append(y[0]) #(query_albumtitles) 
+        if len(x_vals) < 1 :
+            warning = 1
+        else:
+            warning = 0
+        bars_data = go.Scatter(
+            x=x_vals,
+            y=y_vals,
+            marker_color= plot_c)
+        fig = go.Figure(data=bars_data)
+        fig.update_yaxes(tickvals=[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]) 
+        fig.update_layout(
+            title=f"Pitchfork's Album Ratings for {name}",
+            xaxis_title="Albums",
+            yaxis_title="Album Rating (0-10)") 
+        div = fig.to_html(full_html=False)
+    
+        #artist
+        TTq = sql_query_builder('artist', "TT", name)
+        Gq = sql_query_builder('artist', "G", name)
+        SAq = sql_query_builder('artist', 'SA', name)
+        SA = pull_content_sql(SAq)
+        print(SA)
+        print(TTq, Gq, SAq)
+
+        #reviews
+        review_list = []
+        for k,v in REVIEW_DICT.items():
+            if k.split('_')[0] == name:
+                title = k.split('_')[1]
+                body = v.replace(r'/', '')
+                album_entry = [title, body]
+                if body != 'No Review':
+                    review_list.append(album_entry)
+
+        return render_template(template, name=name, color = color, palette = palette, 
+        review_list = review_list, SA = pull_content_sql(SAq), G = pull_content_sql(Gq), 
+        TT = pull_content_sql(TTq), album_names = final_albums, plot_div=div, 
+        warning = warning)
+    
     else:
         template = 'invalid_response.html'
     print(4)
